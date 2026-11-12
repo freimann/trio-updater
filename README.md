@@ -19,6 +19,9 @@ firmware patch is included in this repository.
 | Can the manifest URL be changed? | Yes, in-app ("Set Manifest URL…") and via QSettings `update/manifest-url` |
 | Is the update signed or encrypted? | No. Plain XOR checksums, vendor HID reports, no signature check |
 | Does the device expose USB MIDI? | No. It enumerates as a single vendor HID function (class 3), 2 interrupt endpoints |
+| USB port | Mini-B; used only for firmware updates and TRIO Manager |
+| SD card | microSDHC, Class 10, 8–32 GB, up to 12 songs |
+| Tempo control | Global playback tempo, 0.5×–2× the learned part tempo (Audiolastic) |
 | MCU | Atmel/Microchip **SAM4S** Cortex-M4, LQFP-64, internal flash at `0x00400000` |
 | External storage | **Winbond W25Q128FVSG**, 16 MB SPI NOR (DSP image, styles, ensemble audio) |
 | DSP | **Analog Devices ADSP-21489** SHARC, with 32 MB SDRAM |
@@ -82,8 +85,8 @@ tools/tlsd_info.py "Song C1 @68.6.tlsd"
   SDRAM (MT48LC16M16A2). Its image ships as an ASCII `0xNN` loader stream
   (711 KB decoded for the Trio+), not as an ELF or a binary with strings.
 * **Front panel:** 5 pots, ~10 tact switches and 8 LEDs, linked by a ribbon to
-  **74HC165** input and **74HC595** output shift registers. The audio SD card
-  uses the `.tlsd` format described in [docs/sdcard.md](docs/sdcard.md).
+  **74HC165** input and **74HC595** output shift registers. The audio microSD
+  card uses the `.tlsd` format described in [docs/sdcard.md](docs/sdcard.md).
 
 ## Why MIDI clock is not a small patch
 

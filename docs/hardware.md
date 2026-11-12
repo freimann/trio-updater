@@ -13,8 +13,8 @@ front-panel board connected by a 2×13 ribbon cable.
 | U4 | **Micron MT48LC16M16A2P-6A:G** | TSOP-II 54 | 256 Mbit / **32 MB** SDRAM, next to the DSP. |
 | U5 | **Analog Devices ADSP-21489** (SHARC) | LQFP-176 (KSWZ-4B) | Audio/looper DSP. |
 | J8 | 2x5 through-hole header, unpopulated | 2.54 mm | Purpose to be determined (MCU JTAG or flash programming). |
-| — | SD card slot | — | User loops / songs. |
-| — | micro-USB B | — | Device HID port. |
+| — | microSDHC slot | — | User loops / songs, 8–32 GB Class 10. |
+| — | Mini-USB B | — | Device HID port / TRIO Manager. |
 
 ### Why the MCU is a SAM4S, not a SAM3S
 
@@ -104,11 +104,35 @@ to tap tempo.
 
 ## SD card
 
-The SD slot on the main board holds the user's songs. Each song is a `.tlsd`
-container: a 138 KB header plus audio in 32 KB chunks, 16-bit mono at 44.1 kHz.
+The microSD slot on the main board holds the user's songs. The owner's manual
+specifies **microSDHC, Class 10, 8–32 GB**, and up to **12 songs** per card.
+Each song is a `.tlsd` container: a 138 KB header plus audio in 32 KB chunks.
 The header stores part lengths in samples, not a BPM value, so the card cannot
 provide a live tempo. See [sdcard.md](sdcard.md) for the offsets and
 `tools/tlsd_info.py` for a parser.
+
+## Owner's-manual constraints
+
+The manual (63 pages, July 2017) adds several facts that matter for the clock
+work:
+
+* **USB is a Mini-B port**, used only for firmware updates and TRIO Manager.
+  There is no MIDI mode, no audio interface and no class-compliant MIDI
+  descriptor mentioned anywhere.
+* **Tempo is a global playback control**, not a per-part stored value. The
+  TEMPO knob's centre detent is the learned tempo (1×), full clockwise is 2×
+  and full counter-clockwise is 0.5×. AUDIOLASTIC time-stretching is active
+  whenever the knob is away from centre.
+* **ALT TIME** chooses a half/double interpretation of the current part, when
+  the learned material supports it.
+* **Maximum loop time is 230 seconds per song part**, derived from 50 BPM and
+  48 bars in 4/4. That is a useful upper bound on the `.tlsd` part length.
+* The audio path is specified as **24-bit / 44.1 kHz**, but the SD container
+  decodes as 16-bit samples. Treat the card copy as 16-bit and do not infer the
+  DSP/ADC resolution from it.
+
+The manual is not redistributed here. It is a DigiTech/Harman document; use the
+copy supplied with the unit or the vendor download.
 
 ## Dumping the W25Q128
 

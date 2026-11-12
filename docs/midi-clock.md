@@ -28,6 +28,21 @@ Reading a song from the SD card does not help either: `.tlsd` stores part
 lengths in samples, not a BPM field, so it records the musical result rather
 than a live tempo. See [sdcard.md](sdcard.md).
 
+The owner's manual describes the tempo model the clock must match:
+
+* **TEMPO is global and continuous**, with a centre detent at the learned
+  tempo (1×), 2× at full clockwise and 0.5× at full counter-clockwise.
+* Moving the knob enables **AUDIOLASTIC** time-stretching; the LED indicates
+  that the playback tempo differs from the learned tempo.
+* **ALT TIME** picks a half- or double-time interpretation of a part when the
+  learned material supports it.
+* Each part has its own learned tempo; adjacent parts can be tempo-matched
+  when they are close, otherwise they play at their own rate.
+
+For a clock generator this means the useful range is bounded to 0.5×–2× of a
+per-part learned tempo, and the current value is a playback parameter rather
+than a stored song field.
+
 Constraint 2 is the real problem: a clock generator needs 24 pulses per quarter
 note at the current tempo, and something has to own that number.
 

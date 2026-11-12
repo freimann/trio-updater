@@ -1,9 +1,10 @@
 # SD card and `.tlsd` song files
 
-The Trio+ stores songs and loops on a removable SD card. Each song is a
-`.tlsd` file: a fixed 138,032-byte header followed by loop audio in 32 KB
-chunks. This format is not documented by DigiTech; the offsets below come from
-the community spreadsheet `Trio+Addresses.xlsx` in
+The Trio+ stores songs and loops on a removable **microSDHC** card (Class 10,
+8–32 GB, up to 12 songs). Each song is a `.tlsd` file: a fixed 138,032-byte
+header followed by loop audio in 32 KB chunks. This format is not documented by
+DigiTech; the offsets below come from the community spreadsheet
+`Trio+Addresses.xlsx` in
 [`giveabit/Trio-Plus-Data`](https://github.com/giveabit/Trio-Plus-Data) and
 were checked against the sample files in that repository.
 
@@ -126,10 +127,16 @@ Consequences:
 
 ## Audio format
 
-The sample files decode as **16-bit signed mono PCM at 44.1 kHz**. This
-contradicts the "24-bit" marketing description; the community analysis of the
-SD data reached the same conclusion. Audio is stored in 32 KB chunks, and an
-overdub can overwrite the silent chunks that the looper reserved.
+The owner's manual specifies the performance and looper engines as **24-bit /
+44.1 kHz**, but the sample files decode as **16-bit signed mono PCM at
+44.1 kHz**. The consistent reading is that the DSP runs at 24-bit and the SD
+container stores a 16-bit copy; do not use the file format to infer the ADC or
+DSP resolution. Audio is stored in 32 KB chunks, and an overdub can overwrite
+the silent chunks that the looper reserved.
+
+The manual's loop limit is **230 seconds per song part**, based on 50 BPM and
+48 bars in 4/4. That matches the largest part lengths seen in the header and is
+a useful sanity check when parsing unknown files.
 
 There are no standard MIDI messages in the header, only the binary settings and
 sample counts above.
