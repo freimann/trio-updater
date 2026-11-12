@@ -17,9 +17,16 @@ means writing a USB function, not toggling a flag.
 
 **2. The MCU probably does not know the tempo.**
 The looper/band/tempo logic lives on the DSP, on the other side of the SPI link
-(`0x40008000`). The MCU image contains no BPM/tempo strings or tables. Until a
-bus capture (or a DSP disassembly) proves otherwise, assume the MCU has no
-musical timebase of its own.
+(`0x40008000`). That DSP is an **ADSP-21489 SHARC** (see
+[hardware.md](hardware.md)), and its image ships as a VisualDSP++-style ASCII
+`0xNN` loader stream. The MCU image contains no BPM/tempo strings or tables,
+does not touch its on-chip ADC, and uses SysTick plus SPI0 for timing and
+control. Until a bus capture (or DSP analysis) proves otherwise, assume the
+tempo number reaches the MCU over SPI, if at all.
+
+Reading a song from the SD card does not help either: `.tlsd` stores part
+lengths in samples, not a BPM field, so it records the musical result rather
+than a live tempo. See [sdcard.md](sdcard.md).
 
 Constraint 2 is the real problem: a clock generator needs 24 pulses per quarter
 note at the current tempo, and something has to own that number.
@@ -90,17 +97,22 @@ clock if you want the Trio+ to follow external gear.
 
 ## Recommended path
 
-1. **Capture first.** With a Trio+ connected, record the USB descriptor set and
+1. **Dump the external flash.** A CH341A plus a SOIC-8 clip reads the 16 MB
+   W25Q128FVSG. It shows how the DSP image, styles and ensemble audio are
+   stored, how much space is free, and whether the MCU stages the update image
+   there. Use `tools/dump_flash.sh` and `tools/analyze_flash.py`.
+2. **Capture first.** With a Trio+ connected, record the USB descriptor set and
    the HID traffic during normal operation (`ioreg -p IOUSB -l`, `usbhid-dump`,
    or Wireshark with USBPcap). Confirm there is really no MIDI/audio alt setting
    at runtime.
-2. **Find the tempo path.** Turn the tempo control and tap tempo while capturing
-   SPI (logic analyser on the DSP link) and the HID reports. Decide whether the
-   MCU sees BPM at all.
-3. **Prototype Option B.** It gives a working clock with a fraction of the risk,
+3. **Find the tempo path.** Turn the tempo control and tap tempo while capturing
+   SPI (logic analyser on the DSP link) and the HID reports. Also buzz out J8:
+   if it is the SAM4S JTAG/SWD header, a J-Link gives you live RAM inspection and
+   a recovery path.
+4. **Prototype Option B.** It gives a working clock with a fraction of the risk,
    and the tempo plumbing it forces you to build is exactly what Option A needs
    later.
-4. **Only then consider A**, on a sacrificial unit, with the stock image and a
+5. **Only then consider A**, on a sacrificial unit, with the stock image and a
    recovery procedure verified first.
 
 ## Safety notes for any firmware work

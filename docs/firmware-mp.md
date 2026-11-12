@@ -3,6 +3,10 @@
 Artifact: `TrioLooper_Update.bin`, 40,960 bytes (`0x0000`–`0xA000`), raw
 headerless ARM image. SHA-256 in `reference/artifacts.sha256`.
 
+This is the **internal** SAM4S application image (flash base `0x00400000`),
+not a dump of the external 16 MB Winbond. See
+[hardware.md](hardware.md) for the two-flash arrangement.
+
 ## Image map
 
 Loaded at `0x00400000`, so file offset `N` maps to `0x400000 + N`.
@@ -34,13 +38,20 @@ for a useful diff target.
 
 | Block | Base | Notes |
 |---|---|---|
-| SPI | `0x40008000` | Bus to the DSP; most-referenced peripheral in the image |
+| SPI0 | `0x40008000` | DSP link and external flash; most-referenced peripheral in the image |
 | USB device (UDP) | `0x40034000` | Interrupt-driven, ISR below |
-| RSTC / SUPC | `0x400E1400` | Reset and supply controller |
-| PIOA | `0x400E0E00` | GPIO / pin mux |
+| PIOA | `0x400E0E00` | GPIO / pin mux / chip selects |
+| PIOC | `0x400E1200` | GPIO |
+| RSTC / SUPC / WDT | `0x400E1400` | Reset, supply and watchdog |
+| PMC / EFC | `0x400E0400` / `0x400E0A00` | Clocking / internal-flash controller |
 
-This is consistent with an Atmel/Microchip SAM3S-class Cortex-M3
-(ARMv7-M, Thumb-2).
+SysTick is enabled (vector `0x00403F21`). The image does **not** reference the
+on-chip ADC, PWM or USART blocks, so the front-panel pots are not read by the
+MCU's ADC.
+
+The base address `0x00400000` is the SAM4S internal-flash base, which makes
+the part an Atmel/Microchip **SAM4S** Cortex-M4 (ARMv7E-M, Thumb-2), not a
+SAM3S. The 40 KB length is exactly five 8 KB erase blocks.
 
 ## USB ISR
 
@@ -115,22 +126,29 @@ plus the `0x00` report ID byte the vendor tool prepends when calling `hid_write`
 
 ## What the MCU does and does not own
 
-* Owns: USB stack, HID command handling, flash programming, SPI master, UI.
+* Owns: USB stack, HID command handling, external-flash programming, SPI
+  master, UI.
 * Does *not* obviously own: tempo/BPM. The tempo is a DSP-side concept; the MCU
   most likely forwards transport/tempo events over SPI. This needs confirmation
   before any clock-generation patch can be designed.
 
-## Free space
+## Free space and the update mechanism
 
-15,018 erased bytes at the end of the image is plenty for a USB-MIDI
-implementation *in principle*. The constraints are:
+15,018 zero bytes at the end of the image is plenty for a USB-MIDI
+implementation *in principle*. Constraints and open questions:
 
-* SAM3S flash is programmed in pages (typically 256 B) and erased in blocks
-  (typically 4 KB); appending code at `0x406556` is not block-aligned.
-* Whether the bootloader accepts an image of arbitrary length, and whether it
-  erases only the region covered by the update, is unknown.
-* The bootloader itself lives in a protected region; its size and the exact
-  app boundary are not visible in this image.
+* SAM4S internal flash has 512-byte pages and 8 KB erase blocks. The 40 KB
+  image is exactly five erase blocks, so keeping the image at 40 KB keeps the
+  erase/write pattern identical.
+* The image is linked at the flash base (`0x00400000`) and contains no separate
+  bootloader. The update code is in the same image, so the application most
+  likely stages the new image in SRAM (128 KB) and programs its own flash from
+  a RAM routine. That is consistent with the updater's "Reboot Failure" message
+  but has not been observed on hardware.
+* Whether the updater writes all 40 KB unconditionally or uses a length field
+  is not confirmed. A patched image should therefore stay within 40 KB and keep
+  a valid vector table and checksum.
 
-Any patch must therefore keep the image length within the range the bootloader
-accepts, or the device will not boot after the update.
+Any patch must keep the image length and layout the update path expects, or the
+unit will not boot after the update. A J8/JTAG recovery path is strongly
+recommended before testing.

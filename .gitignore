@@ -17,3 +17,10 @@ extracted/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Analysis workspace: PCB photos, third-party checkout, SD song files
+*.jpg
+*.jpeg
+*.png
+*.tlsd
+Trio-Plus-Data/

@@ -19,7 +19,10 @@ firmware patch is included in this repository.
 | Can the manifest URL be changed? | Yes, in-app ("Set Manifest URL…") and via QSettings `update/manifest-url` |
 | Is the update signed or encrypted? | No. Plain XOR checksums, vendor HID reports, no signature check |
 | Does the device expose USB MIDI? | No. It enumerates as a single vendor HID function (class 3), 2 interrupt endpoints |
-| Free space in the MCU image | ~15 KB erased tail (`0x6555`–`0xA000`) |
+| MCU | Atmel/Microchip **SAM4S** Cortex-M4, LQFP-64, internal flash at `0x00400000` |
+| External storage | **Winbond W25Q128FVSG**, 16 MB SPI NOR (DSP image, styles, ensemble audio) |
+| DSP | **Analog Devices ADSP-21489** SHARC, with 32 MB SDRAM |
+| Free space in the MCU image | 15,018 zero bytes at the tail (`0x6556`–`0x9FFF`) |
 
 The firmware images themselves are **not** redistributed here (DigiTech/Harman
 copyright). `tools/fetch_firmware.sh` downloads them from the vendor URLs and
@@ -33,11 +36,16 @@ verifies SHA-256 against `reference/artifacts.sha256`.
 docs/updater.md        updater app + installer analysis, manifest, device detection
 docs/protocol.md       HID flash protocol (reports, commands, checksums)
 docs/firmware-mp.md    Trio+ MCU image map, vectors, USB descriptors, peripherals
+docs/hardware.md       PCB identification, front panel, flash/SDRAM/DSP, dump procedure
+docs/sdcard.md         `.tlsd` song container, header offsets, audio layout
 docs/midi-clock.md     options for generating MIDI clock, with trade-offs
 reference/             manifest snapshot, artifact hashes
 tools/fetch_firmware.sh    download + verify vendor firmware
 tools/dsp_ldr_to_bin.py    decode DSP1.ldr (ASCII "0xNN" lines) to a raw image
 tools/inspect_mp.py        parse the MCU image: vectors, descriptors, free space
+tools/dump_flash.sh        read the external flash twice and compare (CH341A)
+tools/analyze_flash.py     map a full 16 MB dump: partitions, blobs, free space
+tools/tlsd_info.py         parse a `.tlsd` song header and part layout
 ```
 
 ## Quick start
@@ -51,16 +59,31 @@ tools/dsp_ldr_to_bin.py firmware/trioplus/DSP1.ldr -o firmware/trioplus/DSP1.bin
 
 # 3. Inspect the MCU image
 tools/inspect_mp.py firmware/trioplus/TrioLooper_Update.bin
+
+# 4. If you have a CH341A and a SOIC-8 clip, dump and map the external flash
+tools/dump_flash.sh trio_flash.bin
+tools/analyze_flash.py trio_flash.bin
+
+# 5. Inspect a song copied from the SD card
+tools/tlsd_info.py "Song C1 @68.6.tlsd"
 ```
 
 ## Target hardware
 
-* **MCU:** Atmel/Microchip SAM3S-class Cortex-M3 (ARMv7-M, Thumb-2).
-  Image base `0x00400000`, initial SP `0x200016B8`, reset `0x00402ED9`.
-  Peripherals identified in the image: USB device (UDP) `0x40034000`,
-  SPI `0x40008000`, PIOA `0x400E0E00`, RSTC/SUPC `0x400E1400`.
-* **DSP:** separate processor behind the SPI link. Its image is opaque
-  (high entropy, no strings, no header) and the ISA/toolchain is unidentified.
+* **MCU:** Atmel/Microchip **SAM4S** Cortex-M4 (ARMv7E-M, Thumb-2), LQFP-64.
+  Internal flash base `0x00400000`, 512-byte pages / 8 KB erase blocks.
+  Image: initial SP `0x200016B8`, reset `0x00402ED9`.
+  Peripherals used: SPI0 `0x40008000`, USB device (UDP) `0x40034000`,
+  PIOA `0x400E0E00`, PIOC `0x400E1200`, RSTC/SUPC/WDT `0x400E14xx`, SysTick.
+* **External flash:** Winbond **W25Q128FVSG**, 16 MB SPI NOR. Holds the DSP
+  image, style data and ensemble audio; the 40 KB MCU application lives in the
+  SAM4S internal flash instead. See [docs/hardware.md](docs/hardware.md).
+* **DSP:** Analog Devices **ADSP-21489** SHARC, LQFP-176, with 32 MB Micron
+  SDRAM (MT48LC16M16A2). Its image ships as an ASCII `0xNN` loader stream
+  (711 KB decoded for the Trio+), not as an ELF or a binary with strings.
+* **Front panel:** 5 pots, ~10 tact switches and 8 LEDs, linked by a ribbon to
+  **74HC165** input and **74HC595** output shift registers. The audio SD card
+  uses the `.tlsd` format described in [docs/sdcard.md](docs/sdcard.md).
 
 ## Why MIDI clock is not a small patch
 

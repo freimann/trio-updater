@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Inspect a DigiTech Trio / Trio+ MCU firmware image.
 
-The image is a raw, headerless ARM image mapped at 0x00400000. This script
-prints the vector table, the embedded USB descriptors, the peripheral blocks
-referenced by the code, and the erased tail.
+The image is a raw, headerless ARM image mapped at 0x00400000 (SAM4S internal
+flash base). This script prints the vector table, the embedded USB descriptors,
+the peripheral blocks referenced by the code, and the erased tail.
 
 Usage:
     tools/inspect_mp.py firmware/trioplus/TrioLooper_Update.bin
@@ -27,14 +27,14 @@ SYSTEM_HANDLERS = [
 ]
 
 PERIPHERALS = {
-    0x40008000: ("SPI0 (DSP link)", 0x400),
-    0x40034000: ("USB device (UDP)", 0x400),
-    0x400E0E00: ("PIOA", 0x400),
-    0x400E1400: ("RSTC / SUPC", 0x400),
-    0x40090000: ("UART0", 0x400),
-    0x40098000: ("UART1", 0x400),
-    0x40084000: ("TWI0", 0x400),
-    0x40080000: ("TC0", 0x400),
+    0x40008000: ("SPI0 (DSP / flash link)", 0x200),
+    0x40034000: ("USB device (UDP)", 0x200),
+    0x400E0400: ("PMC", 0x100),
+    0x400E0A00: ("EFC (flash controller)", 0x100),
+    0x400E0E00: ("PIOA", 0x200),
+    0x400E1000: ("PIOB", 0x200),
+    0x400E1200: ("PIOC", 0x200),
+    0x400E1400: ("RSTC / SUPC / WDT", 0x200),
 }
 
 
