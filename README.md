@@ -87,6 +87,10 @@ tools/tlsd_info.py "Song C1 @68.6.tlsd"
 * **Front panel:** 5 pots, ~10 tact switches and 8 LEDs, linked by a ribbon to
   **74HC165** input and **74HC595** output shift registers. The audio microSD
   card uses the `.tlsd` format described in [docs/sdcard.md](docs/sdcard.md).
+* **Board variants:** the Trio+ board is `HPM165_D` with a `W25Q128FVSG` SPI
+  flash. The original Trio board (`5047121_B`) instead carries a Winbond
+  **W9812G6KH-6 16 MB SDRAM**; its firmware flash is not on the top side. See
+  [docs/hardware.md](docs/hardware.md).
 
 ## Why MIDI clock is not a small patch
 

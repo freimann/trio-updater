@@ -1,10 +1,28 @@
 # Hardware
 
-Board: `HPM165_D TRIO PLUS MAIN` (silkscreen), barcode `V16022411613`.
-The PCB photos show a board revision from February 2016 and a separate
-front-panel board connected by a 2×13 ribbon cable.
+Two different main boards appear in the photos. The first is the Trio+ board;
+the second (with the micro-USB port and no SD slot) appears to be the original
+Trio.
 
-## Main devices
+| | Trio+ | Trio (second board) |
+|---|---|---|
+| Silkscreen | `HPM165_D TRIO PLUS MAIN` | `5047121_B` |
+| MCU | SAM4S-class LQFP-64 (U2) | SAM4S-class LQFP-64 (U2, marking obscured) |
+| DRAM | Micron MT48LC16M16, 32 MB | Winbond **W9812G6KH-6**, 16 MB |
+| Firmware flash | W25Q128FVSG, 16 MB SPI NOR | not visible on the top side |
+| USB | Mini-B | Micro-B |
+| Storage | microSDHC slot | none visible |
+| MCU image | 40 KB, PID `0x0043` | 40 KB, PID `0x0042` |
+
+> **Do not confuse the two Winbond parts.** The Trio+ flash is
+> `W25Q128FVSG` (SPI NOR, 16 MB). The second board's large Winbond is
+> `W9812G6KH-6`, which is **128 Mbit SDRAM**, not firmware storage. Clipping a
+> programmer onto it will not produce a firmware dump.
+
+## Trio+ main devices
+
+Board: `HPM165_D TRIO PLUS MAIN`, barcode `V16022411613`, February 2016. It
+carries a separate front-panel board connected by a 2×13 ribbon cable.
 
 | Ref | Device | Package | Role |
 |---|---|---|---|
@@ -136,7 +154,12 @@ copy supplied with the unit or the vendor download.
 
 ## Dumping the W25Q128
 
-The part is 3.3 V. Use `tools/dump_flash.sh` (reads twice and compares) or:
+First confirm the part marking. **W25Q128FVSG** is the SPI flash;
+**W9812G6KH-6** is the 16 MB SDRAM and cannot be dumped as firmware. On the
+`5047121_B` board the flash is not on the visible top side, so inspect the
+underside before attaching a clip.
+
+The flash is 3.3 V. Use `tools/dump_flash.sh` (reads twice and compares) or:
 
 ```sh
 brew install flashrom

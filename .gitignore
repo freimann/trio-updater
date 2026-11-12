@@ -23,5 +23,6 @@ __pycache__/
 *.jpeg
 *.png
 *.pdf
+*.webp
 *.tlsd
 Trio-Plus-Data/

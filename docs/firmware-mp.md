@@ -7,6 +7,26 @@ This is the **internal** SAM4S application image (flash base `0x00400000`),
 not a dump of the external 16 MB Winbond. See
 [hardware.md](hardware.md) for the two-flash arrangement.
 
+## Trio and Trio+ images
+
+Both products ship a 40,960-byte MCU image with the same entry point and
+linker base, so the two are close relatives:
+
+| | Trio | Trio+ |
+|---|---|---|
+| Artifact | `Trio_Update.bin` | `TrioLooper_Update.bin` |
+| Size | 40,960 B | 40,960 B |
+| Initial SP | `0x20001798` | `0x200016B8` |
+| Reset | `0x00402ED9` | `0x00402ED9` |
+| USB PID | `0x0042` | `0x0043` |
+| Device descriptor | `0x00405FE0` | `0x00406520` |
+| Configuration descriptor | `0x00405FA0` | `0x004064E0` |
+| Free tail | 16,362 zero bytes | 15,018 zero bytes |
+
+The images differ in 12,889 bytes, mostly strings, USB descriptors and
+product-specific tables rather than the SPI/USB driver core. The Trio+ map
+below is the one used by this project; the Trio image parses the same way.
+
 ## Image map
 
 Loaded at `0x00400000`, so file offset `N` maps to `0x400000 + N`.
