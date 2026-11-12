@@ -30,7 +30,9 @@ carries a separate front-panel board connected by a 2×13 ribbon cable.
 | U3 | **Winbond W25Q128FVSG** | SOIC-8, 208 mil | 128 Mbit / **16 MB** SPI NOR. Date code 1541. |
 | U4 | **Micron MT48LC16M16A2P-6A:G** | TSOP-II 54 | 256 Mbit / **32 MB** SDRAM, next to the DSP. |
 | U5 | **Analog Devices ADSP-21489** (SHARC) | LQFP-176 (KSWZ-4B) | Audio/looper DSP. |
-| J8 | 2x5 through-hole header, unpopulated | 2.54 mm | Purpose to be determined (MCU JTAG or flash programming). |
+| U1 | unidentified, marking not legible | SOT-23-6 | Next to U2; best candidate for the pot ADC (see below). |
+| J9 | 2×13 through-hole ribbon header | 2.54 mm | Panel ribbon. Silkscreen `J9` sits at its right end. |
+| J8 | single pad / test point | — | Silkscreen beside the microSD slot. **Not** a 2×5 header and not SPI. |
 | — | microSDHC slot | — | User loops / songs, 8–32 GB Class 10. |
 | — | Mini-USB B | — | Device HID port / TRIO Manager. |
 
@@ -99,6 +101,90 @@ on-chip ADC, PWM or USART blocks. The front-panel buttons and LEDs are handled
 by shift registers, but the five pots are analog and their ADC is not yet
 identified (see below).
 
+## SPI tap points (RP2040 bridge)
+
+There is **no SPI connector or header** on the Trio+ main board. SPI0 is only
+exposed at the flash chip and at three plated test points, so a tap is a short
+solder job on the top side.
+
+### U3 — W25Q128FVSG (primary tap)
+
+U3 is the 8-pin SOIC between the microSD slot and the 2×13 ribbon header.
+Pin 1 is marked with a dot at the lower-left corner of the package as seen in
+the photos, so the pins run 1–4 along the bottom edge and 8–5 along the top.
+
+| Pin | Signal | Use |
+|---|---|---|
+| 1 | `/CS` | Optional; separates flash bursts from other SPI0 traffic |
+| 2 | `DO` (MISO) | **Tap** |
+| 3 | `/WP` | Leave alone |
+| 4 | `GND` | **Tap** — common ground with the Pico |
+| 5 | `DI` (MOSI) | **Tap** |
+| 6 | `CLK` | **Tap** |
+| 7 | `/HOLD` | Leave alone |
+| 8 | `VCC` (3.3 V) | Reference only; do not tie to the Pico's 3V3 |
+
+This is the best single point because the MCU image only drives SPI0, and the
+external flash, the panel shift registers and (probably) the pot ADC all hang
+off it with separate chip selects. One CLK/MOSI/MISO/GND tap therefore sees
+every SPI0 transaction; `/CS` tells you which device is being addressed. The
+flash itself is idle except during boot, update and settings access, so expect
+bursts rather than continuous traffic.
+
+### TP2 / TP3 / TP4 — probe points
+
+Three plated through-holes sit between U2 and the ribbon header, each on its own
+trace. Three signals in a row is consistent with either SPI0
+(CLK/MOSI/MISO) or SWD (SWDIO/SWCLK/nRESET). Buzz them out against U3 pins 6,
+5 and 2 before soldering:
+
+* If they match, use the test points instead of the SOIC pins.
+* If they are SWD, they are still useful for debugging and recovery, but the
+  tempo capture has to come from U3.
+
+### U1 — probable pot ADC
+
+U1 is a 6-pin SOT-23 next to U2 with no legible marking in the photos. The
+front panel appears to mux the five pots down to one analog line, and a
+74HC4067-class part would fit the wide SOIC footprint on the panel board. A
+single-channel SPI ADC in a SOT-23-6 is therefore plausible. Continuity from U1
+to U3 `DO`/`CLK` and to the ribbon header would confirm that the pot scan is on
+SPI0. Until then, treat U1 as unverified.
+
+### Ribbon header (fallback)
+
+The 2×13 header carries the front-panel lines. The row of 20 series resistors
+under it is a DSP-side bus, not one resistor per ribbon pin, so do not assume
+the header is a simple four-wire shift-register port. If turning the TEMPO knob
+produces nothing on SPI0, the tempo path is on this header or on the MCU↔DSP
+link, and the header becomes the next tap.
+
+### Wiring and capture
+
+```
+Trio+ U3                Pico / RP2040
+pin 6  CLK   --[330R]--> GP2   (PIO input)
+pin 5  DI    --[330R]--> GP3   (PIO input)
+pin 2  DO    --[330R]--> GP4   (PIO input)
+pin 1  /CS   --[330R]--> GP5   (PIO input, optional)
+pin 4  GND   ----------> GND
+```
+
+1. Power off and unplug before soldering. Use a SOIC-8 clip or 30 AWG wire.
+2. Put 220–330 Ω in series with CLK, MOSI and MISO at the Trio+ end. The Pico
+   is input-only here, but the resistors protect the bus if a GPIO is driven
+   during reset or a firmware mistake.
+3. Connect **GND only** between the boards. Power the Pico from its own USB and
+   leave the Trio+ 3.3 V rail alone. Both sides are 3.3 V, so no level shifter
+   is needed.
+4. Capture with a PIO SPI sniffer: sample on CLK edges, push CLK/MOSI/MISO/CS
+   into a DMA ring, and dump to the host over the Pico's USB serial.
+5. Record three cases separately: cold boot, turning the TEMPO knob, and
+   pressing transport. Short periodic transactions on a non-flash `/CS` are the
+   pot scan; long bursts are flash.
+
+Never drive the bus from the Pico. The Trio+ must remain the only SPI master.
+
 ## Front-panel board
 
 The front panel is a second PCB behind the knobs, wired to the main board by a
@@ -115,10 +201,11 @@ The front panel is a second PCB behind the knobs, wired to the main board by a
 So the MCU scans buttons and drives LEDs over a shift-register chain, which is
 consistent with the SPI0/PIO usage in its image. The pots are not in that
 chain. The ADSP-21489 has no on-chip ADC and the SAM4S ADC registers are not
-referenced by the MCU image, so there is either an external SPI ADC on the main
-board or the pots are read by a part of the design that has not been traced.
-This must be settled with a continuity check and a scope before choosing where
-to tap tempo.
+referenced by the MCU image, so the pots most likely reach a small external
+ADC. The SOT-23-6 at **U1** on the main board is the best candidate: the panel
+appears to mux the pots down to one analog line, which is what a
+single-channel SPI ADC needs. Confirm with a continuity check before tapping;
+see [SPI tap points](#spi-tap-points-rp2040-bridge).
 
 ## SD card
 

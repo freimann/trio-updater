@@ -93,6 +93,13 @@ events.
 Tap the SPI link (or a GPIO heartbeat) with a small MCU and emit DIN MIDI /
 USB-MIDI from that. No firmware changes, no bricking risk.
 
+Concrete tap points on the Trio+ (there is no SPI connector): the W25Q128FVSG
+flash at **U3** pins 6 (CLK), 5 (MOSI), 2 (MISO), 4 (GND), or the **TP2/TP3/TP4**
+test points if continuity shows they are the same nets. See
+[hardware.md](hardware.md#spi-tap-points-rp2040-bridge). A Raspberry Pi Pico /
+RP2040 can sniff the bus with PIO and enumerate as a USB-MIDI device at the same
+time.
+
 Cost: hardware. Requires opening the unit, finding a usable 3.3 V rail and the
 SPI/transport signal, and reverse-engineering the tempo encoding on the wire.
 
