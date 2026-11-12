@@ -1,0 +1,19 @@
+# SHA-256 of the vendor artifacts this analysis is based on.
+# Paths are relative to the repository root.
+# Verify with:  shasum -a 256 -c reference/artifacts.sha256
+#
+# Firmware (downloaded by tools/fetch_firmware.sh)
+ea4df46626871cadb49a87e42a73d13d833785b0893e2f4444dc232a135422c5  firmware/trioplus/TrioLooper_Update.bin
+79454a676d21506ea4563bef59fb40f50ee82768ef6213cbc0d7f9647ffe4124  firmware/trioplus/DSP1.ldr
+27de5922c569d4329883b80c449d9200a54dcc0109751b3ceb2c3b3d17ca6c3d  firmware/trioplus/DSP1.bin
+b04245236e1a5a94dd5e90ceb3faf89c439eb9824e19542c239e98147f28c6cf  firmware/trioplus/TrioPlusStyleData.bin
+9bc0420c2033993c94e4a0fb7dbe1e9cfe7e4f94ca2bc93a1badc0bf2795fc29  firmware/trioplus/EnsembleAudio.flac
+bab98159a33f4ffe4b62296c6a4edf66aca994488a4d36a028832ef9cc017d22  firmware/orig/Trio_Update.bin
+06cc8b655175e8de29db10d2591647d869e656f33ac4cda71fd7a6e059ec5fe4  firmware/orig/DSP1.ldr
+#
+# Updater application (not redistributed; hash for identification)
+35a9654b33341ee46c3500c489ca9e7dbcf41fc215ce8aef25e73860de8a55c9  trioupdaterinstaller_v2.0.2.exe
+c732d1ca8710b5ade42a102f2e96e4518f193745de4f78347257f67fc851d550  extracted/app/TrioUpdater.exe
+#
+# Manifest snapshot
+336df3c2bac1a663c077ecdb4820eacb15f6569cf874b531411ef56694b0b888  reference/tp-manifest.xml

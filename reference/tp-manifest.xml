@@ -1,0 +1,28 @@
+<Family Name="TRIO" ID="0x63">
+    <Product Name="TRIO+" ID="0x43">
+        <Components>
+            <Component Name="MP" Version="3.1.0" ReleaseDate="2015-12-20" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioPlus/TrioLooper_Update.bin" />
+            <Component Name="DSP" Version="3.3.1" ReleaseDate="2015-01-08" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioPlus/DSP1.ldr" />
+            <Component Name="Ensemble" Version="0xD53C" ReleaseDate="2015-12-20" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioPlus/EnsembleAudio.flac" />
+            <Component Name="Styles" Version="0xF7D6" ReleaseDate="2015-12-20" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioPlus/TrioPlusStyleData.bin" />
+        </Components>
+    </Product>
+    <Product Name="TRIO" ID="0x42">
+        <Components>
+            <Component Name="MP" Version="3.1.4" ReleaseDate="2016-01-08" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/OriginalTrio/Trio_Update.bin" />
+            <Component Name="DSP" Version="3.3.0" ReleaseDate="2016-02-16" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/OriginalTrio/DSP1.ldr" />
+        </Components>
+    </Product>
+    <Product Name="Trio Updater">
+        <Components>
+            <Component Name="Win" Version="2.0.2" ReleaseDate="2016-03-25" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioUpdater/Trio Updater Installer.exe" />
+            <Component Name="Mac" Version="2.0.2" ReleaseDate="2016-03-25" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioUpdater/Trio Updater Installer.dmg" />
+        </Components>
+    </Product>
+    <Product Name="Trio Manager">
+        <Components>
+            <Component Name="Win" Version="1.1.0" ReleaseDate="2016-04-08" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioManager/Trio Manager Installer.exe" />
+            <Component Name="Mac" Version="1.1.0" ReleaseDate="2016-04-08" URL="http://harmandbx.blob.core.windows.net/digi-trio-plus/TrioManager/Trio Manager Installer.dmg" />
+        </Components>
+    </Product>
+</Family>

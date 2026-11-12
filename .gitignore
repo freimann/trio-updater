@@ -1,0 +1,19 @@
+# Analysis workspace: generated/vendor artifacts, never committed.
+venv/
+.venv/
+.venv-re/
+
+# Vendor binaries are downloaded with tools/fetch_firmware.sh, not committed.
+firmware/
+extracted/
+*.exe
+*.dmg
+*.msi
+
+# Scratch
+*.part
+*.tmp
+*.log
+__pycache__/
+*.pyc
+.DS_Store
