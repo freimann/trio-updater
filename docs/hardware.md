@@ -125,11 +125,50 @@ the photos, so the pins run 1–4 along the bottom edge and 8–5 along the top.
 | 8 | `VCC` (3.3 V) | Reference only; do not tie to the Pico's 3V3 |
 
 This is the best single point because the MCU image only drives SPI0, and the
-external flash, the panel shift registers and (probably) the pot ADC all hang
-off it with separate chip selects. One CLK/MOSI/MISO/GND tap therefore sees
-every SPI0 transaction; `/CS` tells you which device is being addressed. The
-flash itself is idle except during boot, update and settings access, so expect
-bursts rather than continuous traffic.
+external flash and the DSP hang off it with separate chip selects. One
+CLK/MOSI/MISO/GND tap therefore sees every SPI0 transaction; `/CS` tells you
+which device is being addressed. The flash itself is idle except during boot,
+update and settings access, so expect bursts rather than continuous traffic.
+
+### SPI clock and modes (from the MCU image)
+
+The Trio+ firmware initializes SPI0 in one place, at `0x404ACC`. The register
+values decode as follows:
+
+| Register | Value | Meaning |
+|---|---|---|
+| `SPI_MR` | `0x06000013` | master, variable PCS, DLYBCS = 6 MCK cycles |
+| `SPI_CSR0` | `0x00002885` | SCBR = 40, CPOL = 1, CPHA = 0, 8 bits (mode 2) |
+| `SPI_CSR3` | `0x00002887` | SCBR = 40, CPOL = 1, CPHA = 1, 8 bits (mode 3) |
+| `SPI_CR` | `0x01000001` | SPIEN + LASTXFER |
+
+SCBR is the divider in bits 8–15 of `SPI_CSR` (the low byte holds CPOL, CPHA,
+CSNAAT/CSAAT and BITS). The master clock is 60 MHz:
+
+* `CKGR_PLLAR = 0x20093F02` → DIVA = 2, MULA = 9, so with the 12 MHz crystal
+  PLLA = 12/2 × 10 = **60 MHz**.
+* `PMC_MCKR` selects PLLA with prescaler /1.
+* The flash wait-state helper is called with **3 wait states**, which is the
+  SAM4S 46–60 MHz band. This independently confirms 60 MHz.
+* `CKGR_PLLBR = 0x000F3F02` → PLLB = 96 MHz, divided by 2 for the 48 MHz USB
+  clock, which is why a 12 MHz crystal is the consistent choice.
+
+So **SPI0 runs at 60 MHz / 40 = 1.5 MHz** on both configured chip selects.
+CS0 (mode 2) and CS3 (mode 3) differ only in the clock phase; the W25Q128 only
+supports modes 0 and 3, so CS3 is almost certainly the flash and CS0 the DSP
+link. CS1 and CS2 are left disabled (`SCBR = 0`), so the panel and the pot ADC
+are not on those selects — they are probably bit-banged or on the DSP side.
+
+There are no other `SPI_CSR` writes in the 40 KB image, so the runtime uses the
+same 1.5 MHz as the update path. At that rate the RP2040 does not need a fast
+sniffer: 1.5 MHz is 80× slower than the Pico's 120 MHz clock, and even a
+GPIO-edge IRQ could keep up. PIO plus DMA is still the clean way to timestamp
+both edges and both chip selects.
+
+Because the two devices use opposite sample edges, capture MOSI and MISO on
+**both** CLK edges and let software pick the edge from `/CS`:
+mode 2 samples on the falling edge, mode 3 on the rising edge (the bus idles
+high because CPOL = 1).
 
 ### TP2 / TP3 / TP4 — probe points
 
